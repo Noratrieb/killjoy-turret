@@ -2,7 +2,6 @@ mod autorole;
 mod commands;
 mod general;
 
-use serde::{Serialize, Deserialize};
 use std::collections::{HashMap, HashSet};
 use std::fs;
 
@@ -11,17 +10,8 @@ use serenity::framework::StandardFramework;
 use serenity::http::Http;
 use serenity::model::id::{ChannelId, UserId};
 use serenity::{async_trait, model::gateway::Ready, prelude::*};
-
-#[derive(Serialize, Deserialize)]
-struct AutoRoleData {
-
-}
-
-pub struct AutoRoleDataKey;
-
-impl TypeMapKey for AutoRoleDataKey {
-    type Value = AutoRoleData;
-}
+use crate::autorole::{AUTOROLE_GROUP, AutoRoleDataKey, AutoRoleData};
+use crate::commands::MY_HELP;
 
 struct Handler;
 
@@ -34,7 +24,7 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
-    let token = fs::read_to_string("bot_token").expect("Expected bot token in file 'bot_token'");
+    let token = fs::read_to_string("token").expect("Expected bot token in file 'bot_token'");
 
     let http = Http::new_with_token(&token);
 
@@ -58,11 +48,8 @@ async fn main() {
                 .delimiter(" ")
                 .owners(owners)
         })
-        .normal_message(normal_message)
         .help(&MY_HELP)
-        .group(&GENERAL_GROUP)
-        .group(&MEME_GROUP)
-        .group(&ADMIN_GROUP);
+        .group(&AUTOROLE_GROUP);
 
     let mut client = Client::builder(&token)
         .event_handler(Handler)
@@ -72,7 +59,7 @@ async fn main() {
 
     {
         let mut data = client.data.write().await;
-        data.insert::<LastMessageInChannel>(HashMap::default());
+        data.insert::<AutoRoleDataKey>(AutoRoleData::default());
     }
 
     if let Err(why) = client.start().await {

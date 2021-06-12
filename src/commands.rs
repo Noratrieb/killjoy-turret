@@ -1,7 +1,5 @@
 use std::collections::HashSet;
 
-use lazy_static::lazy_static;
-use rand::Rng;
 use serenity::client::Context;
 use serenity::framework::standard::{
     help_commands,
