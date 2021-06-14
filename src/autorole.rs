@@ -5,15 +5,6 @@ use serenity::framework::standard::{
 };
 use serenity::model::prelude::*;
 use serenity::prelude::*;
-use serenity::{
-    async_trait,
-    collector::MessageCollectorBuilder,
-    framework::standard::{help_commands, CommandGroup, HelpOptions, StandardFramework},
-    futures::stream::StreamExt,
-    http::Http,
-    model::prelude::*,
-    prelude::*,
-};
 use std::collections::HashMap;
 use std::time::Duration;
 
@@ -28,13 +19,26 @@ impl TypeMapKey for AutoRoleDataKey {
 #[description = "Auto role related commands"]
 struct AutoRole;
 
+const DEFAULT_MESSAGE: &'static str = "Select your role";
+
 #[command]
+#[aliases("a")]
 #[description = "Add auto assign roles"]
 #[usage = "sdakhnfj"]
-async fn autorole(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
+async fn autorole(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let http = &ctx.http;
-    let mut data = ctx.data.write().await;
-    let mut auto_roles = data.get_mut::<AutoRoleDataKey>();
+
+    let target_channel = args.single::<ChannelId>();
+    args.quoted();
+    let message = args.single::<String>().unwrap_or(DEFAULT_MESSAGE.to_string());
+
+    if let Err(_) = target_channel {
+        msg.channel_id
+            .say(http, "You need to mention the channel the message should be sent in")
+            .await?;
+        return Ok(());
+    }
+    let target_channel = target_channel.unwrap();
 
     msg.channel_id
         .send_message(http, |m| {
@@ -51,21 +55,39 @@ async fn autorole(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
         })
         .await?;
 
-    while let Some(answer) = &msg
-        .author
-        .await_reply(&ctx)
-        .timeout(Duration::from_secs(30))
-        .await
-    {
-        if let Some(emote) = answer.content.split(' ').next() {
-            lazy_static! {
+    let mut roles = vec![];
 
+    while let Some(answer) = &msg.author.await_reply(&ctx).timeout(Duration::from_secs(30)).await {
+        if answer.content.contains("cancel") {
+            return Ok(());
+        }
+        if let Some(role) = answer.mention_roles.get(0) {
+            if let Some(emote) = answer.content.split(' ').next() {
+                println!("should add emote: {} for role {}", emote, role.0);
+                answer.react(http, '☑').await?;
+
+                roles.push((emote.to_string(), role.0));
+            } else {
+                break;
             }
-
-            println!("should add emote: {}", emote);
-            answer.react(http, '☑').await?;
+        } else {
+            break;
         }
     }
+
+    msg.channel_id.say(http, "done").await?;
+
+    target_channel
+        .send_message(http, |m| {
+            m.embed(|e| {
+                e.title(message);
+                e.field("neutral", "same", false)
+            })
+        })
+        .await?;
+
+    let mut data = ctx.data.write().await;
+    let mut auto_roles = data.get_mut::<AutoRoleDataKey>().unwrap();
 
     Ok(())
 }

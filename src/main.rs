@@ -2,16 +2,16 @@ mod autorole;
 mod commands;
 mod general;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::fs;
 
+use crate::autorole::{AutoRoleData, AutoRoleDataKey, AUTOROLE_GROUP};
+use crate::commands::MY_HELP;
 use serenity::client::Context;
 use serenity::framework::StandardFramework;
 use serenity::http::Http;
-use serenity::model::id::{ChannelId, UserId};
+use serenity::model::id::UserId;
 use serenity::{async_trait, model::gateway::Ready, prelude::*};
-use crate::autorole::{AUTOROLE_GROUP, AutoRoleDataKey, AutoRoleData};
-use crate::commands::MY_HELP;
 
 struct Handler;
 
