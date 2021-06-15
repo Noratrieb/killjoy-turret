@@ -107,37 +107,32 @@ async fn autorole(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult
         })
         .await?;
 
-    for data in roles {
-        reaction_message.react(http, data.0).await?;
+    for data in &roles {
+        reaction_message.react(http, data.0.clone()).await?;
     }
 
     let mut data = ctx.data.write().await;
     let mut auto_roles = data.get_mut::<AutoRoleDataKey>().unwrap();
+
+    roles
+        .iter()
+        .map(|(emoji, role)| ((emoji.id, reaction_message.id), role.id))
+        .for_each(|(key, value)| {
+            auto_roles.messages.insert(key, value);
+        });
 
     Ok(())
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct AutoRoleData {
-    messages: Vec<HashMap<DEmote, DRole>>,
+    messages: HashMap<(EmojiId, MessageId), RoleId>,
 }
 
 impl Default for AutoRoleData {
     fn default() -> Self {
         Self {
-            messages: Vec::default(),
+            messages: HashMap::default(),
         }
     }
-}
-
-#[derive(Serialize, Deserialize, Eq, PartialEq, Hash)]
-struct DEmote {
-    name: String,
-    id: String,
-}
-
-#[derive(Serialize, Deserialize, Eq, PartialEq)]
-struct DRole {
-    name: String,
-    id: String,
 }
