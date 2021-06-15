@@ -6,6 +6,7 @@ use serenity::framework::standard::{
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 use std::collections::HashMap;
+use std::str::FromStr;
 use std::time::Duration;
 
 pub struct AutoRoleDataKey;
@@ -65,8 +66,20 @@ async fn autorole(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult
             if let Some(emote) = answer.content.split(' ').next() {
                 println!("should add emote: {} for role {}", emote, role.0);
                 answer.react(http, '☑').await?;
-
-                roles.push((emote.to_string(), role.0));
+                match role.to_role_cached(&ctx).await {
+                    Some(role) => match EmojiIdentifier::from_str(emote) {
+                        Ok(emojiIdent) => roles.push((emojiIdent, role)),
+                        Err(_) => {
+                            answer.channel_id.say(http, "Could not find emoji").await?;
+                        }
+                    },
+                    None => {
+                        answer
+                            .channel_id
+                            .say(http, "Could not find role, try again or use another role")
+                            .await?;
+                    }
+                }
             } else {
                 break;
             }
@@ -75,16 +88,28 @@ async fn autorole(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult
         }
     }
 
+    if roles.len() == 0 {
+        msg.channel_id.say(http, "No roles were entered.").await?;
+        return Ok(());
+    }
+
     msg.channel_id.say(http, "done").await?;
 
-    target_channel
+    let reaction_message = target_channel
         .send_message(http, |m| {
             m.embed(|e| {
-                e.title(message);
-                e.field("neutral", "same", false)
+                e.title(message).fields(
+                    roles
+                        .iter()
+                        .map(|(emote, role)| (&role.name, format!("<:{}:{}>", emote.name, emote.id), true)),
+                )
             })
         })
         .await?;
+
+    for data in roles {
+        reaction_message.react(http, data.0).await?;
+    }
 
     let mut data = ctx.data.write().await;
     let mut auto_roles = data.get_mut::<AutoRoleDataKey>().unwrap();
