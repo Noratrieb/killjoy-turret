@@ -1,8 +1,10 @@
+use crate::Handler;
 use serde::{Deserialize, Serialize};
 use serenity::framework::standard::{
     macros::{command, group},
     Args, CommandResult,
 };
+use serenity::model::channel::ReactionType::Custom;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 use std::collections::HashMap;
@@ -122,6 +124,26 @@ async fn autorole(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult
         });
 
     Ok(())
+}
+
+// listener
+
+pub async fn handle_reaction(ctx: &Context, reaction: &Reaction) {
+    let data = ctx.data.read().await;
+    let mut auto_roles = data.get::<AutoRoleDataKey>().unwrap();
+    if let Custom { animated, id, name } = &reaction.emoji {
+        if let Some(role) = auto_roles.messages.get(&(*id, reaction.message_id)) {
+            match &reaction.member {
+                None => {
+                    println!("Missing member on reaction");
+                    // remove reaction
+                }
+                Some(member) => {
+                    // add role
+                }
+            }
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]

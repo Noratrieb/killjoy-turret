@@ -1,22 +1,28 @@
-mod autorole;
-mod commands;
-mod general;
-
 use std::collections::HashSet;
 use std::fs;
 
-use crate::autorole::{AutoRoleData, AutoRoleDataKey, AUTOROLE_GROUP};
-use crate::commands::MY_HELP;
 use serenity::client::Context;
 use serenity::framework::StandardFramework;
 use serenity::http::Http;
 use serenity::model::id::UserId;
+use serenity::model::prelude::*;
 use serenity::{async_trait, model::gateway::Ready, prelude::*};
+
+use crate::autorole::{AutoRoleData, AutoRoleDataKey, AUTOROLE_GROUP};
+use crate::commands::MY_HELP;
+
+mod autorole;
+mod commands;
+mod general;
 
 struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
+    async fn reaction_add(&self, ctx: Context, add_reaction: Reaction) {
+        autorole::handle_reaction(&ctx, &add_reaction)
+    }
+
     async fn ready(&self, _: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
     }
