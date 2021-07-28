@@ -2,13 +2,10 @@ use std::collections::HashSet;
 
 use serenity::client::Context;
 use serenity::framework::standard::{
-    help_commands,
-    macros::{command, group, help},
-    Args, CommandGroup, CommandResult, HelpOptions,
+    help_commands, macros::help, Args, CommandGroup, CommandResult, HelpOptions,
 };
 use serenity::model::channel::Message;
 use serenity::model::id::UserId;
-use serenity::utils::{content_safe, ContentSafeOptions};
 
 #[help]
 #[individual_command_tip = "Killjoy Turret Command Info"]
