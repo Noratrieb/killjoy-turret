@@ -5,6 +5,15 @@ use serenity::framework::standard::{
 };
 use serenity::model::prelude::*;
 use serenity::prelude::*;
+use serenity::{
+    async_trait,
+    collector::MessageCollectorBuilder,
+    framework::standard::{help_commands, CommandGroup, HelpOptions, StandardFramework},
+    futures::stream::StreamExt,
+    http::Http,
+    model::prelude::*,
+    prelude::*,
+};
 use std::collections::HashMap;
 use std::time::Duration;
 
@@ -17,15 +26,15 @@ impl TypeMapKey for AutoRoleDataKey {
 #[group]
 #[commands(autorole)]
 #[description = "Auto role related commands"]
-struct _AutoRole;
+struct AutoRole;
 
 #[command]
 #[description = "Add auto assign roles"]
 #[usage = "sdakhnfj"]
-async fn autorole(ctx: &Context, msg: &Message, _: Args) -> CommandResult {
+async fn autorole(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
     let http = &ctx.http;
-    //let mut data = ctx.data.write().await;
-    //let mut auto_roles = data.get_mut::<AutoRoleDataKey>();
+    let mut data = ctx.data.write().await;
+    let mut auto_roles = data.get_mut::<AutoRoleDataKey>();
 
     msg.channel_id
         .send_message(http, |m| {
@@ -42,13 +51,10 @@ async fn autorole(ctx: &Context, msg: &Message, _: Args) -> CommandResult {
         })
         .await?;
 
-    while let Some(answer) = &msg
-        .author
-        .await_reply(&ctx)
-        .timeout(Duration::from_secs(30))
-        .await
-    {
+    while let Some(answer) = &msg.author.await_reply(&ctx).timeout(Duration::from_secs(30)).await {
         if let Some(emote) = answer.content.split(' ').next() {
+            lazy_static! {}
+
             println!("should add emote: {}", emote);
             answer.react(http, '☑').await?;
         }
