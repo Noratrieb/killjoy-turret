@@ -28,7 +28,7 @@ async fn main() {
     let file_path = std::env::var("CONFIG_PATH").unwrap_or_else(|_| "./config.json".to_string());
     let file = match fs::read_to_string(file_path).unwrap_or_else(|err| {
         eprintln!("Error reading config file ({file_path}): {err}");
-        std::process:exit(1);
+        std::process::exit(1);
     });
     let config = serde_json::from_str::<ConfigFile>(&file).unwrap();
 
