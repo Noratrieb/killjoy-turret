@@ -25,7 +25,9 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
-    let file = fs::read_to_string("config.json").unwrap();
+    let file_path = std::env::var("CONFIG_PATH").unwrap_or("./config.json");
+    println!("reading config from {file_path}");
+    let file = fs::read_to_string(file_path).unwrap();
     let config = serde_json::from_str::<ConfigFile>(&file).unwrap();
 
     let token = &config.token;
