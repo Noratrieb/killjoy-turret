@@ -26,7 +26,7 @@ impl EventHandler for Handler {
 #[tokio::main]
 async fn main() {
     let file_path = std::env::var("CONFIG_PATH").unwrap_or_else(|_| "./config.json".to_string());
-    let file = fs::read_to_string(file_path).unwrap_or_else(|err| {
+    let file = fs::read_to_string(&file_path).unwrap_or_else(|err| {
         eprintln!("Error reading config file ({file_path}): {err}");
         std::process::exit(1);
     });
