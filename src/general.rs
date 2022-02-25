@@ -21,10 +21,7 @@ pub async fn normal_message(ctx: &Context, msg: &Message) {
     let lowercase_content = msg.content.to_lowercase();
     for (trigger, reaction) in &reactions.auto_react {
         if lowercase_content.contains(trigger) {
-            if let Err(why) = msg
-                .react(&ctx.http, ReactionType::Unicode(reaction.clone()))
-                .await
-            {
+            if let Err(why) = msg.react(&ctx.http, ReactionType::Unicode(reaction.clone())).await {
                 eprintln!("Error reacting {}", why);
             }
         }
