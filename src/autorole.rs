@@ -7,6 +7,7 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 use std::collections::HashMap;
 use std::time::Duration;
+use tracing::info;
 
 pub struct AutoRoleDataKey;
 
@@ -44,7 +45,7 @@ async fn autorole(ctx: &Context, msg: &Message, _args: Args) -> CommandResult {
 
     while let Some(answer) = &msg.author.await_reply(&ctx).timeout(Duration::from_secs(30)).await {
         if let Some(emote) = answer.content.split(' ').next() {
-            println!("should add emote: {}", emote);
+            info!(%emote, "should add emote");
             answer.react(http, '☑').await?;
         }
     }

@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use serenity::framework::standard::macros::hook;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
+use tracing::error;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ConfigFile {
@@ -21,8 +22,8 @@ pub async fn normal_message(ctx: &Context, msg: &Message) {
     let lowercase_content = msg.content.to_lowercase();
     for (trigger, reaction) in &reactions.auto_react {
         if lowercase_content.contains(trigger) {
-            if let Err(why) = msg.react(&ctx.http, ReactionType::Unicode(reaction.clone())).await {
-                eprintln!("Error reacting {}", why);
+            if let Err(err) = msg.react(&ctx.http, ReactionType::Unicode(reaction.clone())).await {
+                error!(%err, "Error reacting");
             }
         }
     }
