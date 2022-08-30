@@ -1,14 +1,25 @@
-FROM rust:alpine3.15 as build
+FROM rust as build
+
+RUN rustup toolchain install nightly
+RUN rustup default nightly
+
 WORKDIR /app
-COPY . ./
-RUN cargo build --release
+COPY Cargo.toml Cargo.lock ./
+RUN mkdir src
+RUN echo "fn main() {}" > src/main.rs
 
-FROM alpine:latest
-COPY --from=build /app/target/release/killjoy_turret /usr/local/bin/killjoy_turret
+RUN cargo build --release -Zsparse-registry
 
-COPY ./config.json /app/config.json
-COPY ./entrypoint.sh /app/entrypoint.sh
+COPY src ./src
 
-ENV CONFIG_PATH=/app/config.json
+# now rebuild with the proper main
+RUN touch src/main.rs
+RUN cargo build --release -Zsparse-registry
 
-ENTRYPOINT ["sh", "./entrypoint.sh"]
+FROM debian:latest
+
+WORKDIR /app
+
+COPY --from=build /app/target/release/killjoy_turret killjoy_turret
+
+CMD ["/app/killjoy_turret"]
