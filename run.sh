@@ -1,0 +1,1 @@
+docker run -d -v (pwd)/config.json:/app/config.json -e CONFIG_PATH=/app/config.json killjoy-turret:1.0
